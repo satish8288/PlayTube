@@ -1,0 +1,16 @@
+{
+  "name": "playtube",
+  "version": "1.0.0",
+  "description": "A youtube like application",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Satish Bhardwaj",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
