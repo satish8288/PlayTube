@@ -11,11 +11,11 @@ const app = express();
 const PORT = process.env.PORT;
 
 connectDB()
-  .then(() => {
-    app.listen(PORT || 3000, () => {
-      console.log(`Server is running at port ${PORT}`);
+    .then(() => {
+        app.listen(PORT || 3000, () => {
+            console.log(`Server is running at port ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.log("Mongodb connection failed !!!", err);
     });
-  })
-  .catch((err) => {
-    console.log("Mongodb connection failed !!!", err);
-  });
