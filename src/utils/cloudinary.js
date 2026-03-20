@@ -14,10 +14,11 @@ const uploadOnCloudinary = async (localFilePath) => {
       resource_type: auto,
     });
     console.log("File uploaded successfully :", response);
+    return response;
   } catch (error) {
     fs.unlink(localStorage);
     console.log("Error in unlinked localStorage file :", error);
   }
 };
 
-export { cloudinary, uploadOnCloudinary };
+export { uploadOnCloudinary };
