@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
@@ -12,12 +12,12 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded({ extended: true, limit: "20kb" }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-import userRouter from "./routes/user.route";
+import userRouter from "./routes/user.routes.js";
 app.use("/api/v1/user", userRouter);
 
 export { app };

@@ -1,8 +1,13 @@
-import User from "../models/user.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResposne } from "../utils/ApiRespose.js";
+
+const options = {
+  httpOnly: true,
+  secure: true,
+};
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -25,7 +30,12 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
 
 // Register user
 const userRegister = asyncHandler(async (req, res) => {
-  const [username, email, fullName, password] = req.body;
+  console.log("user register");
+
+  console.log("Body :", req.body);
+  console.log("____________________________");
+
+  const { username, email, fullName, password } = req.body;
 
   if (
     [username, email, fullName, password].some((field) => field?.trim() === "")
@@ -129,6 +139,25 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 // logout
-const logoutUser = asyncHandler(async());
+const logoutUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
 
-export { userRegister, loginUser };
+  res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResposne(200, {}, "User logged Out"));
+});
+
+export { userRegister, loginUser, logoutUser };
