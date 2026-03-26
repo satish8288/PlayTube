@@ -45,19 +45,31 @@ const userSchema = new Schema(
     },
   },
   {
-    timesStamps: true,
+    timestamps: true,
   }
 );
 
 //pre middleware
-userSchema.pre("save", function () {
-  this.password = bcrypt.hash(this.password, 10);
-  next();
+userSchema.pre("save", async function () {
+  try {
+    if (!this.isModified("password")) return;
+
+    this.password = await bcrypt.hash(this.password, 10);
+  } catch (error) {
+    console.log("error in pre save middleware.................");
+  }
 });
 
 // check hash password
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  if (!password || !this.password) {
+    throw new Error("Password or hashed password is null");
+  }
+  try {
+    return await bcrypt.compare(password, this.password);
+  } catch (err) {
+    throw new Error("Error while comparing password", { cause: err });
+  }
 };
 
 //generate access token
