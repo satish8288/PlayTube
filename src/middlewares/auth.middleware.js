@@ -1,12 +1,13 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
+import { User } from "../models/user.model.js";
 
-const verifyJWT = asyncHandler(async (req, _, next) => {
+const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
     const token =
-      req.cookie.accessToken ||
-      req.headers("Authorization")?.replace("Bearer ", "");
+      req.cookies.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
       throw new ApiError(401, "Unauthorization token");
@@ -27,6 +28,7 @@ const verifyJWT = asyncHandler(async (req, _, next) => {
     }
 
     res.user = user;
+
     next();
   } catch (error) {
     console.log("error in auth middleware :", error);

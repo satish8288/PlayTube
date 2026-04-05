@@ -62,6 +62,9 @@ userSchema.pre("save", async function () {
 
 // check hash password
 userSchema.methods.isPasswordCorrect = async function (password) {
+  // console.log("this...............", this.password);
+  // console.log("password............", password);
+
   if (!password || !this.password) {
     throw new Error("Password or hashed password is null");
   }

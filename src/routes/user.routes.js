@@ -9,8 +9,6 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-console.log("user route");
-
 router.route("/register").post(
   upload.fields([
     {
