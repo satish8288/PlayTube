@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResposne } from "../utils/ApiRespose.js";
+import jwt from "jsonwebtoken";
 
 const options = {
   httpOnly: true,
@@ -143,9 +144,9 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-// logout
+// logout ===================================================================================
 const logoutUser = asyncHandler(async (req, res) => {
-  const userId = res.user._id;
+  const userId = req.user._id;
   await User.findByIdAndUpdate(
     userId,
     {
@@ -163,4 +164,92 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResposne(200, {}, "User logged Out"));
 });
 
-export { userRegister, loginUser, logoutUser };
+//get currentUser ===================================================================================
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResposne(200, res.user, "User fetched Successfully"));
+});
+
+//  refreshAccessToken ===================================================================================
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incommingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+  if (!incommingRefreshToken) {
+    throw new ApiError(401, "Refresh token is required");
+  }
+  const decodedToken = jwt.verify(
+    incommingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRETE
+  );
+
+  if (!decodedToken) {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+
+  const user = await User.findById(decodedToken._id);
+
+  if (!user) {
+    throw new ApiError(401, "User does not exist");
+  }
+
+  if (user.refreshToken !== incommingRefreshToken) {
+    throw new ApiError(401, "Refresh token is expired or used");
+  }
+
+  const { accessToken, refreshToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
+
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResposne(
+        200,
+        "Refresh token is valid",
+        { accessToken, refreshToken },
+        "Access token refreshed"
+      )
+    );
+});
+
+//changeCurrentPassword ===================================================================================
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  console.log(req.body);
+
+  const { oldPassword, newPassword } = req.body;
+  console.log("oldPassword.........", oldPassword);
+  console.log("newPassword.........", newPassword);
+
+  if (!(oldPassword.trim() && newPassword.trim())) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  // console.log(req.body);
+  const user = await User.findById(req.user?._id);
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Incorrect password");
+  }
+
+  user.password = newPassword;
+  const newUser = await user.save();
+  console.log("Entered password.......", newPassword);
+  console.log("newUser with new pass..........", newUser.password);
+
+  res
+    .status(200)
+    .json(new ApiResposne(200, {}, "Password changed successfully"));
+});
+
+export {
+  userRegister,
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+};
