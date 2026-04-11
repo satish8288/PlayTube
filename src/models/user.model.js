@@ -51,20 +51,12 @@ const userSchema = new Schema(
 
 //pre middleware
 userSchema.pre("save", async function () {
-  try {
-    if (!this.isModified("password")) return;
-
-    this.password = await bcrypt.hash(this.password, 10);
-  } catch (error) {
-    console.log("error in pre save middleware.................");
-  }
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 // check hash password
 userSchema.methods.isPasswordCorrect = async function (password) {
-  // console.log("this...............", this.password);
-  // console.log("password............", password);
-
   if (!password || !this.password) {
     throw new Error("Password or hashed password is null");
   }

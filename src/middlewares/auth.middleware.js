@@ -27,12 +27,11 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
       throw new ApiError(401, "Invalid Access Token");
     }
 
-    res.user = user;
-
+    req.user = user;
     next();
   } catch (error) {
-    console.log("error in auth middleware :", error);
-    throw new ApiError(error?.message || "Invalid access token");
+    // console.log("error in auth middleware :", error);
+    throw new ApiError(401, "Invalid access token");
   }
 });
 
