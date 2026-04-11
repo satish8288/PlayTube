@@ -216,11 +216,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 //changeCurrentPassword ===================================================================================
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-  console.log(req.body);
-
   const { oldPassword, newPassword } = req.body;
-  console.log("oldPassword.........", oldPassword);
-  console.log("newPassword.........", newPassword);
 
   if (!(oldPassword.trim() && newPassword.trim())) {
     throw new ApiError(400, "All fields are required");
@@ -237,12 +233,38 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
   user.password = newPassword;
   const newUser = await user.save();
-  console.log("Entered password.......", newPassword);
-  console.log("newUser with new pass..........", newUser.password);
-
   res
     .status(200)
     .json(new ApiResposne(200, {}, "Password changed successfully"));
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { email, fullName } = req.body;
+
+  if (email === undefined && fullName === undefined) {
+    throw new ApiError(400, "At least one field is required");
+  }
+
+  if (email && !email.includes("@")) {
+    throw new ApiError(400, "Invalid email");
+  }
+
+  const updateData = {
+    ...(email !== undefined && { email: email.trim() }),
+    ...(fullName !== undefined && { fullName: fullName.trim() }),
+  };
+
+  if (Object.keys(updateData).length === 0) {
+    throw new ApiError(400, "No valid fields to update");
+  }
+
+  const user = await User.findByIdAndUpdate(req.user._id, updateData, {
+    returnDocument: "after",
+  }).select("-password");
+
+  res
+    .status(200)
+    .json(new ApiResposne(200, user, "Account detail updated successfully"));
 });
 
 export {
@@ -252,4 +274,5 @@ export {
   getCurrentUser,
   refreshAccessToken,
   changeCurrentPassword,
+  updateAccountDetails,
 };
