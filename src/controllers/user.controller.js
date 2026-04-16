@@ -29,7 +29,7 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
   }
 };
 
-// Register user
+// Register user ===================================================================================
 const userRegister = asyncHandler(async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     throw new ApiError(400, "Request body is empty");
@@ -99,7 +99,7 @@ const userRegister = asyncHandler(async (req, res) => {
     .json(new ApiResposne(200, createdUser, "User registered Successfully"));
 });
 
-// Login user
+// Login user  ===================================================================================
 const loginUser = asyncHandler(async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     throw new ApiError(400, "Request body is empty");
@@ -238,6 +238,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResposne(200, {}, "Password changed successfully"));
 });
 
+// updateAccountDetails ======================================================================================
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { email, fullName } = req.body;
 
@@ -258,13 +259,50 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No valid fields to update");
   }
 
-  const user = await User.findByIdAndUpdate(req.user._id, updateData, {
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, {
     returnDocument: "after",
   }).select("-password");
 
   res
     .status(200)
-    .json(new ApiResposne(200, user, "Account detail updated successfully"));
+    .json(
+      new ApiResposne(200, "Account detail updated successfully", updatedUser)
+    );
+});
+
+//updateUserAvatar =============================================================================================
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading");
+  }
+
+  const updatedUserProfile = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  res
+    .status(200)
+    .json(
+      new ApiResposne(
+        200,
+        "User avatar updated successfully",
+        updatedUserProfile
+      )
+    );
 });
 
 export {
@@ -275,4 +313,5 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   updateAccountDetails,
+  updateUserAvatar,
 };
