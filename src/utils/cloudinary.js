@@ -8,12 +8,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath, folderName) => {
   try {
     if (!localFilePath) return null;
 
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
+      folder: `playtube/${folderName}`,
     });
 
     fs.unlinkSync(localFilePath);
@@ -25,4 +26,12 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+const destroyFromCloudinary = async (publicId) => {
+  try {
+    const response = await cloudinary.uploader.destroy(publicId);
+    return response;
+  } catch (error) {
+    console.log("Error in destroying file from Cloudinary:", error);
+  }
+};
+export { uploadOnCloudinary, destroyFromCloudinary };
