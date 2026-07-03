@@ -26,9 +26,11 @@ const uploadOnCloudinary = async (localFilePath, folderName) => {
   }
 };
 
-const destroyFromCloudinary = async (publicId) => {
+const destroyFromCloudinary = async (publicId, resourceType = "image") => {
   try {
-    const response = await cloudinary.uploader.destroy(publicId);
+    const response = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+    });
     return response;
   } catch (error) {
     console.log("Error in destroying file from Cloudinary:", error);

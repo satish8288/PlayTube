@@ -12,13 +12,13 @@ import {
   getUserChannelProfile,
   getWatchHistory,
 } from "../controllers/user.controller.js";
-import { upload } from "../middlewares/multer.middleware.js";
+// import { uploadImage } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-
+import { uploadImage } from "../middlewares/imageUpload.middleware.js";
 const router = express.Router();
 
 router.route("/register").post(
-  upload.fields([
+  uploadImage.fields([
     {
       name: "avatar",
       maxCount: 1,
@@ -30,6 +30,7 @@ router.route("/register").post(
   ]),
   userRegister
 );
+
 router.route("/login").post(loginUser);
 
 router.route("/logout").post(verifyJWT, logoutUser);
@@ -44,11 +45,11 @@ router.route("/update-account").post(verifyJWT, updateAccountDetails);
 
 router
   .route("/update-avatar")
-  .post(verifyJWT, upload.single("avatar"), updateUserAvatar);
+  .post(verifyJWT, uploadImage.single("avatar"), updateUserAvatar);
 
 router
   .route("/update-coverImage")
-  .post(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+  .post(verifyJWT, uploadImage.single("coverImage"), updateUserCoverImage);
 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 

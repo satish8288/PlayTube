@@ -5,7 +5,7 @@ import {
   uploadOnCloudinary,
   destroyFromCloudinary,
 } from "../utils/cloudinary.js";
-import { ApiResponse } from "../utils/ApiRespose.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
@@ -290,7 +290,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user.avatarPublicId) {
-    destroyFromCloudinary(user.avatarPublicId);
+    await destroyFromCloudinary(user.avatarPublicId);
   }
 
   const newAvatar = await uploadOnCloudinary(avatarLocalPath, "avatar");
@@ -322,7 +322,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user.coverImagePublicId) {
-    destroyFromCloudinary(user.coverImagePublicId);
+    await destroyFromCloudinary(user.coverImagePublicId);
   }
 
   const coverImage = await uploadOnCloudinary(
