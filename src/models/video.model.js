@@ -5,18 +5,22 @@ const videoSchema = new Schema(
     videoFile: {
       type: String,
       required: true,
+      trim: true,
     },
     thumbnail: {
       type: String,
       required: true,
+      trim: true,
     },
     title: {
       type: String,
       required: true,
+      maxlength: 100,
     },
     description: {
       type: String,
       required: true,
+      trim: true,
     },
     duration: {
       type: Number,
@@ -31,7 +35,7 @@ const videoSchema = new Schema(
       default: true,
     },
     owner: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
