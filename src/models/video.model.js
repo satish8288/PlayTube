@@ -40,7 +40,7 @@ const videoSchema = new Schema(
     },
   },
   {
-    timesStamps: true,
+    timestamps: true,
   }
 );
 
