@@ -6,6 +6,7 @@ const ALLOWED_IMAGE_TYPES = [
   "image/jpg",
   "image/png",
   "image/webp",
+  "application/octet-stream",
 ];
 
 const storage = multer.diskStorage({
@@ -21,11 +22,14 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
+  console.log("Incoming file mimetype:", file.mimetype, file.originalname);
   if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
-    return cb(new Error("Only JPG, JPEG, PNG and WEBP images are allowed."));
+    return cb(
+      new Error("Only JPG, JPEG, PNG ,jfif and WEBP images are allowed.")
+    );
   }
 
-  cb(null, true);
+  return cb(null, true);
 };
 
 const upload = multer({

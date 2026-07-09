@@ -6,7 +6,9 @@ import {
   destroyFromCloudinary,
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
+import { getVideoByIdService } from "../services/video.service.js";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -176,4 +178,34 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
-export { publishAVideo, getAllVideos };
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await getVideoByIdService(videoId, req.user._id);
+
+  await Video.findByIdAndUpdate(videoId, {
+    $inc: {
+      views: 1,
+    },
+  });
+
+  await User.findByIdAndUpdate(req.user._id, {
+    $addToSet: {
+      watchHistory: videoId,
+    },
+  });
+
+  if (!video.length) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video[0], "Video fetched successfully"));
+});
+
+export { publishAVideo, getAllVideos, getVideoById };
