@@ -6,6 +6,10 @@ import {
   destroyFromCloudinary,
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
+import { getVideoByIdService } from "../services/video.service.js";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const publishAVideo = asyncHandler(async (req, res) => {
   // Form Data
@@ -84,4 +88,124 @@ const publishAVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "Video published successfully", video));
 });
 
-export { publishAVideo };
+const getAllVideos = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+
+  const pageNumber = Math.max(Number(page), 1);
+  const limitNumber = Math.max(Number(limit), 1);
+
+  const allowedSortFields = ["createdAt", "views", "duration", "title"];
+  const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+
+  const sortOrder = sortType === "asc" ? 1 : -1;
+
+  const match = {
+    isPublished: true,
+  };
+
+  const sort = {
+    [sortField]: sortOrder,
+  };
+
+  if (userId) {
+    match.owner = new mongoose.Types.ObjectId(userId);
+  }
+
+  if (query) {
+    match.$or = [
+      {
+        title: {
+          $regex: query,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: query,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  const aggregate = Video.aggregate([
+    {
+      $match: match,
+    },
+    {
+      $sort: sort,
+    },
+
+    {
+      $lookup: {
+        from: "users",
+
+        localField: "owner",
+
+        foreignField: "_id",
+
+        as: "owner",
+
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: {
+          $first: "$owner",
+        },
+      },
+    },
+  ]);
+
+  const options = {
+    page: pageNumber,
+    limit: limitNumber,
+  };
+
+  const videos = await Video.aggregatePaginate(aggregate, options);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await getVideoByIdService(videoId, req.user._id);
+
+  await Video.findByIdAndUpdate(videoId, {
+    $inc: {
+      views: 1,
+    },
+  });
+
+  await User.findByIdAndUpdate(req.user._id, {
+    $addToSet: {
+      watchHistory: videoId,
+    },
+  });
+
+  if (!video.length) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video[0], "Video fetched successfully"));
+});
+
+export { publishAVideo, getAllVideos, getVideoById };
