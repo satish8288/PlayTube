@@ -6,10 +6,8 @@ import {
   destroyFromCloudinary,
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
-import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
-import { getVideoByIdService } from "../services/video.service.js";
-import aggregatePaginate from "mongoose-aggregate-paginate-v2";
+import videoService from "../services/video.service.js";
 
 const publishAVideo = asyncHandler(async (req, res) => {
   // Form Data
@@ -179,33 +177,31 @@ const getAllVideos = asyncHandler(async (req, res) => {
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(videoId)) {
-    throw new ApiError(400, "Invalid video ID");
-  }
-
-  const video = await getVideoByIdService(videoId, req.user._id);
-
-  await Video.findByIdAndUpdate(videoId, {
-    $inc: {
-      views: 1,
-    },
-  });
-
-  await User.findByIdAndUpdate(req.user._id, {
-    $addToSet: {
-      watchHistory: videoId,
-    },
-  });
-
-  if (!video.length) {
-    throw new ApiError(404, "Video not found");
-  }
+  const video = await videoService.getVideoById(
+    req.params.videoId,
+    req.user._id
+  );
 
   return res
     .status(200)
-    .json(new ApiResponse(200, video[0], "Video fetched successfully"));
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
 
-export { publishAVideo, getAllVideos, getVideoById };
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const video = await videoService.togglePublishStatus(
+    req.params.videoId,
+    req.user._id
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        video,
+        `Video ${video.isPublished ? "published" : "unpublished"} successfully`
+      )
+    );
+});
+
+export { publishAVideo, getAllVideos, getVideoById, togglePublishStatus };
