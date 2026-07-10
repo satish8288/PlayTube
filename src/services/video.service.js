@@ -16,17 +16,25 @@ const getVideoById = async (videoId, userId) => {
     throw new ApiError(404, "Video not found");
   }
 
-  await Video.findByIdAndUpdate(videoId, {
-    $inc: {
-      views: 1,
-    },
-  });
+  // NOTE:
+  // In production, views should not be incremented
+  // on every request. Apply validation such as
+  // watch duration, duplicate prevention, and bot detection.
+  video[0].views += 1;
 
-  await User.findByIdAndUpdate(userId, {
-    $addToSet: {
-      watchHistory: videoId,
-    },
-  });
+  await Promise.all([
+    Video.findByIdAndUpdate(videoId, {
+      $inc: {
+        views: 1,
+      },
+    }),
+
+    User.findByIdAndUpdate(userId, {
+      $addToSet: {
+        watchHistory: videoId,
+      },
+    }),
+  ]);
 
   return video[0];
 };
@@ -43,7 +51,7 @@ const togglePublishStatus = async (videoId, userId) => {
     throw new ApiError(404, "Video not found");
   }
 
-  if (!isValidObjectId(userId)) {
+  if (!video.owner.equals(userId)) {
     throw new ApiError(403, "You are not authorized to update this video");
   }
 
