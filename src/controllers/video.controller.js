@@ -7,7 +7,7 @@ import {
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { getVideoByIdService } from "../services/video.service.js";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
@@ -181,7 +181,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+  if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "Invalid video ID");
   }
 
@@ -208,4 +208,50 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video[0], "Video fetched successfully"));
 });
 
-export { publishAVideo, getAllVideos, getVideoById };
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (!isValidObjectId(req.user._id)) {
+    throw new ApiError(403, "You are not authorized to update this video");
+  }
+
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        isPublished: !video.isPublished,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!updatedVideo) {
+    throw new ApiError(500, "Failed to update video publish status");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedVideo,
+        `Video ${
+          updatedVideo.isPublished ? "published" : "unpublished"
+        } successfully`
+      )
+    );
+});
+
+export { publishAVideo, getAllVideos, getVideoById, togglePublishStatus };
