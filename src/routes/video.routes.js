@@ -6,7 +6,9 @@ import {
   getAllVideos,
   getVideoById,
   togglePublishStatus,
+  updateVideo,
 } from "../controllers/video.controller.js";
+import { uploadImage } from "../middlewares/imageUpload.middleware.js";
 
 const router = Router();
 
@@ -18,4 +20,10 @@ router.get("/:videoId", verifyJWT, getVideoById);
 
 router.patch("/:videoId/toggle-publish", verifyJWT, togglePublishStatus);
 
+router.patch(
+  "/:videoId",
+  verifyJWT,
+  uploadImage.single("thumbnail"),
+  updateVideo
+);
 export default router;
