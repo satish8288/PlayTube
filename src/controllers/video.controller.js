@@ -6,7 +6,7 @@ import {
   destroyFromCloudinary,
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import videoService from "../services/video.service.js";
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -47,6 +47,16 @@ const publishAVideo = asyncHandler(async (req, res) => {
   }
 
   const uploadedVideo = await uploadOnCloudinary(videoLocalPath, "videos");
+
+  if (!uploadedVideo) {
+    throw new ApiError(500, "Failed to upload video file to Cloudinary");
+  }
+  // Check minimum video duration
+  if (uploadedVideo.duration < 1) {
+    await destroyFromCloudinary(uploadedVideo.publicId, "video");
+    throw new ApiError(400, "Video should be at least 5 seconds long");
+  }
+
   const uploadedThumbnail = await uploadOnCloudinary(
     thumbnailLocalPath,
     "thumbnails"
@@ -55,26 +65,22 @@ const publishAVideo = asyncHandler(async (req, res) => {
   // console.log("Uploaded Video:.............", uploadedVideo);
   // console.log("Uploaded Thumbnail:.............", uploadedThumbnail);
 
-  if (!uploadedVideo) {
-    throw new ApiError(500, "Failed to upload video file to Cloudinary");
-  }
-
-  // Check minimum video duration
-  if (uploadedVideo.duration < 1) {
-    await destroyFromCloudinary(uploadedVideo.public_id, "video");
-    await destroyFromCloudinary(uploadedThumbnail.public_id);
-    throw new ApiError(400, "Video should be at least 5 seconds long");
-  }
-
   if (!uploadedThumbnail) {
-    await destroyFromCloudinary(uploadedVideo.public_id, "video");
-    await destroyFromCloudinary(uploadedThumbnail.public_id);
+    await destroyFromCloudinary(uploadedVideo.publicId, "video");
     throw new ApiError(500, "Failed to upload thumbnail to Cloudinary");
   }
 
+  // console.log("Uploaded Video:.............", uploadedVideo);
   const video = await Video.create({
-    videoFile: uploadedVideo.secure_url,
-    thumbnail: uploadedThumbnail.secure_url,
+    videoFile: {
+      url: uploadedVideo.url,
+      publicId: uploadedVideo.publicId,
+    },
+    thumbnail: {
+      url: uploadedThumbnail.url,
+      publicId: uploadedThumbnail.publicId,
+    },
+
     title,
     description,
     duration: uploadedVideo.duration,
@@ -83,7 +89,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   res
     .status(201)
-    .json(new ApiResponse(201, "Video published successfully", video));
+    .json(new ApiResponse(201, video, "Video published successfully"));
 });
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -204,4 +210,85 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 });
 
-export { publishAVideo, getAllVideos, getVideoById, togglePublishStatus };
+const updateVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+  const thumbnailLocalPath = req.file?.path;
+
+  // Validate video id
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  // Validate request body
+  if (title !== undefined && !title.trim()) {
+    throw new ApiError(400, "Title cannot be empty");
+  }
+
+  if (description !== undefined && !description.trim()) {
+    throw new ApiError(400, "Description cannot be empty");
+  }
+
+  if (title === undefined && description === undefined && !thumbnailLocalPath) {
+    throw new ApiError(400, "Nothing to update");
+  }
+
+  // Find video
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  // Authorization
+  if (video.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to update this video");
+  }
+
+  // Upload new thumbnail if provided
+  if (thumbnailLocalPath) {
+    const oldThumbnailPublicId = video.thumbnail.publicId;
+
+    const uploadedThumbnail = await uploadOnCloudinary(
+      thumbnailLocalPath,
+      "thumbnails"
+    );
+
+    if (!uploadedThumbnail) {
+      throw new ApiError(500, "Failed to upload thumbnail");
+    }
+
+    // Delete old thumbnail
+    await destroyFromCloudinary(oldThumbnailPublicId, "image");
+
+    // Update thumbnail
+    video.thumbnail = {
+      url: uploadedThumbnail.url,
+      publicId: uploadedThumbnail.publicId,
+    };
+  }
+
+  // Update title
+  if (title !== undefined) {
+    video.title = title.trim();
+  }
+
+  // Update description
+  if (description !== undefined) {
+    video.description = description.trim();
+  }
+
+  await video.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video updated successfully"));
+});
+
+export {
+  publishAVideo,
+  getAllVideos,
+  getVideoById,
+  togglePublishStatus,
+  updateVideo,
+};

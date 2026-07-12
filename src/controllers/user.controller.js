@@ -86,10 +86,10 @@ const userRegister = asyncHandler(async (req, res) => {
     email,
     fullName,
     password,
-    avatar: avatar.secure_url,
-    avatarPublicId: avatar.public_id,
-    coverImage: coverImage?.secure_url || "",
-    coverImagePublicId: coverImage?.public_id || "",
+    avatar: avatar.url,
+    avatarPublicId: avatar.publicId,
+    coverImage: coverImage?.url || "",
+    coverImagePublicId: coverImage?.publicId || "",
   });
 
   if (!user) {
@@ -299,8 +299,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error while uploading avatar");
   }
 
-  user.avatar = newAvatar.secure_url;
-  user.avatarPublicId = newAvatar.public_id;
+  user.avatar = newAvatar.url;
+  user.avatarPublicId = newAvatar.publicId;
 
   await user.save({ validateBeforeSave: false });
 
@@ -330,8 +330,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     "cover-image"
   );
 
-  user.coverImage = coverImage.secure_url;
-  user.coverImagePublicId = coverImage.public_id;
+  user.coverImage = coverImage.url;
+  user.coverImagePublicId = coverImage.publicId;
 
   await user.save({ validateBeforeSave: false });
 

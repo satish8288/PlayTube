@@ -17,23 +17,43 @@ const uploadOnCloudinary = async (localFilePath, folderName) => {
       folder: `playtube/${folderName}`,
     });
 
-    fs.unlinkSync(localFilePath);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
 
-    return response;
+    return {
+      url: response.secure_url,
+      publicId: response.public_id,
+      duration: response.duration,
+    };
   } catch (error) {
-    fs.unlinkSync(localFilePath);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
+
     console.log("Error in unlinked localStorage file :", error);
   }
 };
 
+// destroy file from cloudinary
 const destroyFromCloudinary = async (publicId, resourceType = "image") => {
+  if (!publicId) {
+    throw new ApiError(400, "Public ID is required");
+  }
+
   try {
     const response = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
     });
+
+    if (response.result !== "ok") {
+      throw new ApiError(500, "Failed to destroy file from Cloudinary");
+    }
+
     return response;
   } catch (error) {
-    console.log("Error in destroying file from Cloudinary:", error);
+    console.error("Error in destroying file from Cloudinary:", error);
+    throw new ApiError(500, "Failed to destroy file from Cloudinary");
   }
 };
 export { uploadOnCloudinary, destroyFromCloudinary };
