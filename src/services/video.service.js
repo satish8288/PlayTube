@@ -3,6 +3,7 @@ import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
+import { destroyFromCloudinary } from "../utils/cloudinary.js";
 
 // get video by id service
 const getVideoById = async (videoId, userId) => {
@@ -74,9 +75,20 @@ const togglePublishStatus = async (videoId, userId) => {
   return updatedVideo;
 };
 
+const deleteVideo = async (video) => {
+  const videoPublicId = video.videoFile.publicId;
+  const thumbnailPublicId = video.thumbnail.publicId;
+
+  await destroyFromCloudinary(videoPublicId, "video");
+  await destroyFromCloudinary(thumbnailPublicId, "image");
+  // TODO: Delete comments, likes, playlists, watch history, etc.
+  await video.deleteOne();
+};
+
 const videoService = {
   getVideoById,
   togglePublishStatus,
+  deleteVideo,
 };
 
 export default videoService;
