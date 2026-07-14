@@ -53,7 +53,7 @@ const destroyFromCloudinary = async (publicId, resourceType = "image") => {
     return response;
   } catch (error) {
     console.error("Error in destroying file from Cloudinary:", error);
-    throw new ApiError(500, "Failed to destroy file from Cloudinary");
+    // throw new ApiError(500, "Failed to destroy file from Cloudinary");
   }
 };
 export { uploadOnCloudinary, destroyFromCloudinary };

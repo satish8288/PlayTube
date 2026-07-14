@@ -7,6 +7,7 @@ import {
   getVideoById,
   togglePublishStatus,
   updateVideo,
+  deleteVideo
 } from "../controllers/video.controller.js";
 import { uploadImage } from "../middlewares/imageUpload.middleware.js";
 
@@ -26,4 +27,7 @@ router.patch(
   uploadImage.single("thumbnail"),
   updateVideo
 );
+
+router.delete("/:videoId", verifyJWT, deleteVideo);
+
 export default router;
