@@ -9,11 +9,23 @@ const queueOptions = {
       type: "exponential",
       delay: 5000,
     },
-    removeOnComplete: 100,
-    removeOnFail: 500,
+    removeOnComplete: true,
+    removeOnFail: true,
   },
 };
 
 const videoDeletionQueue = new Queue("video-deletion", queueOptions);
+
+const waiting = await videoDeletionQueue.getWaiting();
+console.log("waiting job in queue...", waiting);
+
+const active = await videoDeletionQueue.getActive();
+console.log("active job...", active);
+
+const failed = await videoDeletionQueue.getFailed();
+console.log("failed job...", failed);
+
+const completed = await videoDeletionQueue.getCompleted();
+console.log("completed job...", completed);
 
 export { videoDeletionQueue };

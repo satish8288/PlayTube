@@ -7,7 +7,8 @@ import {
 } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
-import videoService from "../services/video.service.js";
+import { videoService } from "../services/video.service.js";
+import { videoDeletionQueue } from "../queues/videoDeletion.queue.js";
 
 const publishAVideo = asyncHandler(async (req, res) => {
   // Form Data
@@ -292,12 +293,39 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid video id");
   }
 
-  await videoService.deleteVideo(videoId, req.user._id);
+  const video = await Video.findById(videoId);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, "Video deleted successfully"));
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (!video.owner.equals(req.user._id)) {
+    throw new ApiError(403, "You are not authorized to delete this video");
+  }
+
+  if (video.isDeleting) {
+    throw new ApiError(409, "Video deletion is already in progress");
+  }
+
+  video.isDeleting = true;
+  await video.save();
+
+  try {
+    await videoDeletionQueue.add(
+      "delete-video",
+      { videoId: video._id },
+      { jobId: video._id.toString() }
+    );
+    return res
+      .status(202)
+      .json(new ApiResponse(202, null, "Video deletion scheduled"));
+  } catch (error) {
+    video.isDeleting = false;
+    await video.save();
+    throw error;
+  }
 });
+
 export {
   publishAVideo,
   getAllVideos,
