@@ -76,25 +76,15 @@ const togglePublishStatus = async (videoId, userId) => {
 };
 
 // delete video service
-const deleteVideo = async (videoId, userId) => {
-  const video = await Video.findById(videoId, userId);
-
-  if (!video) {
-    return;
-  }
-
-  if (!video.owner.equals(userId)) {
-    throw new ApiError(403, "You are not authorized to delete this video");
-  }
-
+const deleteVideo = async (video) => {
   const videoPublicId = video.videoFile.publicId;
   const thumbnailPublicId = video.thumbnail.publicId;
 
   await destroyFromCloudinary(videoPublicId, "video");
   await destroyFromCloudinary(thumbnailPublicId, "image");
-  // TODO: Delete comments, likes, playlists, watch history, etc.
   await video.deleteOne();
 
+  // TODO: Delete comments, likes, playlists, watch history, etc.
   return;
 };
 
@@ -103,3 +93,5 @@ const videoService = {
   togglePublishStatus,
   deleteVideo,
 };
+
+export { videoService };

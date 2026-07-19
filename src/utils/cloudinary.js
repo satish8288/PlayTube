@@ -46,14 +46,14 @@ const destroyFromCloudinary = async (publicId, resourceType = "image") => {
       resource_type: resourceType,
     });
 
-    if (response.result !== "ok") {
-      throw new ApiError(500, "Failed to destroy file from Cloudinary");
+    if (response.result === "ok" || response.result === "not found") {
+      return response;
     }
 
-    return response;
+    throw new ApiError(500, `Cloudinary delete failed: ${response.result}`);
   } catch (error) {
     console.error("Error in destroying file from Cloudinary:", error);
-    // throw new ApiError(500, "Failed to destroy file from Cloudinary");
+    throw error;
   }
 };
 export { uploadOnCloudinary, destroyFromCloudinary };

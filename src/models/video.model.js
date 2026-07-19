@@ -56,6 +56,14 @@ const videoSchema = new Schema(
       required: true,
       index: true,
     },
+    isDeleting: {
+      type: Boolean,
+      default: false,
+    },
+    deletionError: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

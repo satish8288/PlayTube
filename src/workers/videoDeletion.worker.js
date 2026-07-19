@@ -1,19 +1,34 @@
 import { Worker } from "bullmq";
 import { connection } from "../config/redis.js";
-import { deleteVideo } from "../services/video.service.js";
+import { videoService } from "../services/video.service.js";
+import { Video } from "../models/video.model.js";
 
-const worker = new Worker(
+console.log("Workers are running...");
+const videoDeletionWorker = new Worker(
   "video-deletion",
   async (job) => {
-    await deleteVideo(job.data.videoId);
+    // throw new Error("Testing retry");
+    console.log(`Processing job ${job.id}.........`);
+    const video = await Video.findById(job.data.videoId);
+    if (!video) return;
+    await videoService.deleteVideo(video);
   },
   { connection }
 );
 
-worker.on("completed", (job) => {
+videoDeletionWorker.on("completed", (job) => {
   console.log(`Job ${job.id} completed!`);
 });
 
-worker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} failed: ${err.message}`);
+videoDeletionWorker.on("failed", async (job, err) => {
+  console.log(
+    `Job ${job.id} failed (Attempt ${job.attemptsMade}/${job.opts.attempts})`
+  );
+  if (!job) return;
+  // Retry chal rahi hai, kuch mat karo
+  if (job.attemptsMade < job.opts.attempts) return;
+  const video = await Video.findById(job.data.videoId);
+  if (!video) return;
+  video.isDeleting = false;
+  await video.save();
 });
