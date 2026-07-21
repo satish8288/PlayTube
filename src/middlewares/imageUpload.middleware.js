@@ -13,10 +13,8 @@ const storage = multer.diskStorage({
   destination(req, file, cb) {
     cb(null, "./public/temp");
   },
-
   filename(req, file, cb) {
     const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-
     cb(null, uniqueName + path.extname(file.originalname));
   },
 });
@@ -27,7 +25,6 @@ const fileFilter = (req, file, cb) => {
       new Error("Only JPG, JPEG, PNG ,jfif and WEBP images are allowed.")
     );
   }
-
   return cb(null, true);
 };
 

@@ -24,7 +24,6 @@ export const getVideoByIdPipeline = (videoId, userId) => [
       ],
     },
   },
-
   // remove the ownerDetails array
   {
     $addFields: {
@@ -41,18 +40,15 @@ export const getVideoByIdPipeline = (videoId, userId) => [
       __v: 0,
     },
   },
-
   // Video.owner           = userId
   // Subscription.channel  = userId
   // optimized version of the below code
   {
     $lookup: {
       from: "subscriptions",
-
       let: {
         ownerId: "$owner._id",
       },
-
       pipeline: [
         {
           $match: {
@@ -65,7 +61,6 @@ export const getVideoByIdPipeline = (videoId, userId) => [
       as: "subscribers",
     },
   },
-
   //add subscribersCount and isSubscribed fields to the owner object
   {
     $addFields: {
@@ -85,12 +80,10 @@ export const getVideoByIdPipeline = (videoId, userId) => [
       },
     },
   },
-
   //remove suscribers fields
   {
     $unset: ["subscribers"],
   },
-
   //likes count
   {
     $lookup: {
@@ -110,11 +103,9 @@ export const getVideoByIdPipeline = (videoId, userId) => [
       },
     },
   },
-
   {
     $unset: ["likes"],
   },
-
   // comments count
   {
     $lookup: {
