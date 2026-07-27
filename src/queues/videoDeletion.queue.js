@@ -13,19 +13,9 @@ const queueOptions = {
     removeOnFail: true,
   },
 };
-
 const videoDeletionQueue = new Queue("video-deletion", queueOptions);
-
-const waiting = await videoDeletionQueue.getWaiting();
-console.log("waiting job in queue...", waiting);
-
-const active = await videoDeletionQueue.getActive();
-console.log("active job...", active);
-
-const failed = await videoDeletionQueue.getFailed();
-console.log("failed job...", failed);
-
-const completed = await videoDeletionQueue.getCompleted();
-console.log("completed job...", completed);
-
+// const waiting = await videoDeletionQueue.getWaiting();
+// const active = await videoDeletionQueue.getActive();
+// const failed = await videoDeletionQueue.getFailed();
+// const completed = await videoDeletionQueue.getCompleted();
 export { videoDeletionQueue };
