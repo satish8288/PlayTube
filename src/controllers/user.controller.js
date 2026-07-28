@@ -28,7 +28,7 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
   } catch {
     throw new ApiError(
       500,
-      "Something went wrong while generating referesh and access token"
+      "Something went wrong while generating refresh and access token"
     );
   }
 };
@@ -61,7 +61,7 @@ const userRegister = asyncHandler(async (req, res) => {
 
   const avatarLocalPath = req.files.avatar[0].path;
 
-  //Clasical way
+  //Classical way
   let coverImageLocalPath;
   if (
     req.files &&
@@ -130,7 +130,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
-    throw new ApiError(401, "Invalid user credintials");
+    throw new ApiError(401, "Invalid user credentials");
   }
 
   const token = await generateAccessTokenAndRefreshToken(user._id);
@@ -182,13 +182,13 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 //  refreshAccessToken ===================================================================================
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incommingRefreshToken =
+  const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
-  if (!incommingRefreshToken) {
+  if (!incomingRefreshToken) {
     throw new ApiError(401, "Refresh token is required");
   }
   const decodedToken = jwt.verify(
-    incommingRefreshToken,
+    incomingRefreshToken,
     process.env.REFRESH_TOKEN_SECRETE
   );
 
@@ -202,7 +202,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User does not exist");
   }
 
-  if (user.refreshToken !== incommingRefreshToken) {
+  if (user.refreshToken !== incomingRefreshToken) {
     throw new ApiError(401, "Refresh token is expired or used");
   }
 
@@ -223,7 +223,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-//changeCurrentPassword ===================================================================================
+//changeCurrentPassword
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -247,7 +247,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-// updateAccountDetails ======================================================================================
+// updateAccountDetails
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { email, fullName } = req.body;
 
@@ -348,7 +348,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
   if (!username.trim()) {
-    throw new ApiError(400, "usename is missing");
+    throw new ApiError(400, "username is missing");
   }
 
   const channel = await User.aggregate([
