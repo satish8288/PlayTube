@@ -12,6 +12,12 @@ import {
   getUserChannelProfile,
   getWatchHistory,
 } from "../controllers/user.controller.js";
+import {registerUserSchema,
+  loginUserSchema,
+  changeCurrentPasswordSchema,
+  updateAccountDetailsSchema
+} from "../schemaValidations/user.validation.js"
+import {validate} from "../middlewares/validate.middleware.js";
 // import { uploadImage } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { uploadImage } from "../middlewares/imageUpload.middleware.js";
