@@ -18,7 +18,6 @@ import {registerUserSchema,
   updateAccountDetailsSchema
 } from "../schemaValidations/user.validation.js"
 import {validate} from "../middlewares/validate.middleware.js";
-// import { uploadImage } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { uploadImage } from "../middlewares/imageUpload.middleware.js";
 const router = express.Router();
@@ -37,28 +36,64 @@ router.route("/register").post(
   userRegister
 );
 
-router.route("/login").post(loginUser);
+router.post(
+  "/login",
+  verifyJWT,
+  loginUser
+);
 
-router.route("/logout").post(verifyJWT, logoutUser);
+router.post(
+  "/logout",
+  verifyJWT,
+  logoutUser
+);
 
-router.route("/current-user").get(verifyJWT, getCurrentUser);
+router.get(
+  "/current-user",
+  verifyJWT,
+  getCurrentUser
+)
 
-router.route("/refresh-token").post(refreshAccessToken);
+router.get(
+  "/refresh-token",
+  refreshAccessToken
+);
 
-router.route("/change-password").post(verifyJWT, changeCurrentPassword);
+router.get(
+  "/change-password",
+  verifyJWT,
+  changeCurrentPassword
+);
 
-router.route("/update-account").post(verifyJWT, updateAccountDetails);
+router.post(
+    "/update-account",
+    verifyJWT,
+    updateAccountDetails
+  );
 
-router
-  .route("/update-avatar")
-  .post(verifyJWT, uploadImage.single("avatar"), updateUserAvatar);
+router.post(
+    "/update-avatar",
+    verifyJWT,
+    uploadImage.single("avatar"),
+    updateUserAvatar
+  );
 
-router
-  .route("/update-coverImage")
-  .post(verifyJWT, uploadImage.single("coverImage"), updateUserCoverImage);
+router.post(
+    "/update-coverImage",
+    verifyJWT,
+    uploadImage.single("coverImage"),
+    updateUserCoverImage
+  );
 
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
+router.get(
+  "/c/:username",
+  verifyJWT,
+  getUserChannelProfile
+);
 
-router.route("/history").get(verifyJWT, getWatchHistory);
+router.get(
+  "/history",
+  verifyJWT,
+  getWatchHistory);
 
 export default router;
