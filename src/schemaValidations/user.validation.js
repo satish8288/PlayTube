@@ -27,7 +27,7 @@ export const registerUserSchema = Joi.object({
     "any.required": "Full name is required",
     "string.empty": "Full name cannot be empty",
   }),
-  password: Joi.string().min(8).max(100).pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/).  required().messages({
+  password: Joi.string().min(8).max(100).pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/).required().messages({
     "string.min": "Password must be at least 8 characters long",
     "string.max": "Password must not exceed 100 characters",
     "any.required": "Password is required",
@@ -65,7 +65,7 @@ export const changeCurrentPasswordSchema = Joi.object({
     "any.required": "Old password is required",
     "string.empty": "Old password cannot be empty",
   }),
-  newPassword: Joi.string().min(8).max(100).required().pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/) .messages({
+  newPassword: Joi.string().min(8).max(100).required().pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/).messages({
     "string.min": "New password must be at least 8 characters long",
     "string.max": "New password must not exceed 100 characters",
     "any.required": "New password is required",
@@ -83,6 +83,10 @@ export const updateAccountDetailsSchema = Joi.object({
     "string.min": "Full name must be at least 3 characters long",
     "string.max": "Full name must not exceed 50 characters",
     "string.empty": "Full name cannot be empty",
-  }),
-});
+  })
+}).min(1)
+  .messages({
+    "object.min": "At least one field (fullName or email) is required to update",
+  })
+  .options({ stripUnknown: true });
 

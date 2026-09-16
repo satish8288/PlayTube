@@ -1,10 +1,10 @@
-export const validate = (schema) => {
+import { ApiError } from "../utils/ApiError.js";
+export const validateRequest = (schema) => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
     });
-
     if (error) {
       return next(
         new ApiError(
@@ -13,9 +13,7 @@ export const validate = (schema) => {
         )
       );
     }
-
     req.body = value;
-
     next();
   };
 };
