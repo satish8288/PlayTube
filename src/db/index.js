@@ -1,15 +1,11 @@
-import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
+import { Video } from "../models/video.model.js";
 
-const connectDB = async () => {
-  try {
-    const connectionInstance = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(
-      `\n MongoDB connected successfully...\n DB HOST :${connectionInstance.connection.host}`
-    );
-  } catch (error) {
-    console.log("MONGODB connection FAILED: ", error);
-    process.exit(1);
-  }
+const db = {
+  models: {
+    User,
+    Video,
+  },
 };
 
-export default connectDB;
+export default db;

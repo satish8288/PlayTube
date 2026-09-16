@@ -1,58 +1,95 @@
 import express from "express";
-import {
-  userRegister,
-  loginUser,
-  logoutUser,
-  getCurrentUser,
-  refreshAccessToken,
-  changeCurrentPassword,
-  updateAccountDetails,
-  updateUserAvatar,
-  updateUserCoverImage,
-  getUserChannelProfile,
-  getWatchHistory,
-} from "../controllers/user.controller.js";
-// import { uploadImage } from "../middlewares/multer.middleware.js";
+import { validateRequest } from "../middlewares/validateRequest.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { uploadImage } from "../middlewares/imageUpload.middleware.js";
-const router = express.Router();
+import { validateFiles } from "../middlewares/validateFiles.middleware.js"
+import { UserRepository } from "../repository/user.repository.js";
+import { UserService } from "../services/user.service.js";
+import { UserController } from "../controllers/user.controller.js";
+import {
+  registerUserSchema,
+  loginUserSchema,
+  changeCurrentPasswordSchema,
+  updateAccountDetailsSchema
+} from "../schemaValidations/user.validation.js"
 
-router.route("/register").post(
+const router = express.Router();
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository);
+const userController = new UserController(userService);
+
+router.post("/register",
   uploadImage.fields([
-    {
-      name: "avatar",
-      maxCount: 1,
-    },
-    {
-      name: "coverImage",
-      maxCount: 1,
-    },
+    { name: "avatar", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
   ]),
-  userRegister
+  validateFiles("avatar"),
+  validateRequest(registerUserSchema),
+  userController.userRegister
 );
 
-router.route("/login").post(loginUser);
+router.post(
+  "/login",
+  validateRequest(loginUserSchema),
+  userController.loginUser
+);
 
-router.route("/logout").post(verifyJWT, logoutUser);
+router.post(
+  "/logout",
+  verifyJWT,
+  userController.logoutUser
+);
 
-router.route("/current-user").get(verifyJWT, getCurrentUser);
+router.get(
+  "/current-user",
+  verifyJWT,
+  userController.getCurrentUser
+)
 
-router.route("/refersh-token").post(refreshAccessToken);
+router.post(
+  "/refresh-token",
+  userController.refreshAccessToken
+);
 
-router.route("/change-password").post(verifyJWT, changeCurrentPassword);
+router.post(
+  "/change-password",
+  verifyJWT,
+  validateRequest(changeCurrentPasswordSchema),
+  userController.changeCurrentPassword
+);
 
-router.route("/update-account").post(verifyJWT, updateAccountDetails);
+router.patch(
+  "/update-account",
+  verifyJWT,
+  validateRequest(updateAccountDetailsSchema),
+  userController.updateAccountDetails
+);
 
-router
-  .route("/update-avatar")
-  .post(verifyJWT, uploadImage.single("avatar"), updateUserAvatar);
+router.patch(
+  "/update-avatar",
+  verifyJWT,
+  uploadImage.single("avatar"),
+  validateFiles("avatar"),
+  userController.updateUserAvatar
+);
 
-router
-  .route("/update-coverImage")
-  .post(verifyJWT, uploadImage.single("coverImage"), updateUserCoverImage);
+router.patch(
+  "/update-coverImage",
+  verifyJWT,
+  uploadImage.single("coverImage"),
+  validateFiles("coverImage"),
+  userController.updateUserCoverImage
+);
 
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
+router.get(
+  "/c/:username",
+  verifyJWT,
+  userController.getUserChannelProfile
+);
 
-router.route("/history").get(verifyJWT, getWatchHistory);
+router.get(
+  "/history",
+  verifyJWT,
+  userController.getWatchHistory);
 
 export default router;

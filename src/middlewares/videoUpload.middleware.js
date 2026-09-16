@@ -20,7 +20,6 @@ const fileFilter = (req, file, cb) => {
     ALLOWED_VIDEO_TYPES.includes(file.mimetype)
   )
     return cb(null, true);
-
   if (
     file.fieldname === "thumbnail" &&
     ALLOWED_THUMBNAIL_TYPES.includes(file.mimetype)
