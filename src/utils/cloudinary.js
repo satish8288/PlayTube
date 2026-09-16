@@ -1,47 +1,86 @@
-import { v2 as cloudinary } from "cloudinary";
+import streamifier from "streamifier";
 import fs from "fs";
-import "dotenv/config";
+import { cloudinary } from "../config/cloudinary.js";
+import { ApiError } from "./ApiError.js";
+import { logger } from "./logger.js";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const uploadOnCloudinary = async (localFilePath, folderName) => {
-  try {
-    if (!localFilePath) return null;
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-      folder: `playtube/${folderName}`,
-    });
-    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
-    return {
-      url: response.secure_url,
-      publicId: response.public_id,
-      duration: response.duration,
-    };
-  } catch (error) {
-    if (fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
-    console.error("Error in unlinked localStorage file :", error);
+const cleanupLocalFile = (localFilePath) => {
+  if (localFilePath && fs.existsSync(localFilePath)) {
+    fs.unlinkSync(localFilePath);
   }
 };
 
-// destroy file from cloudinary
+const uploadBufferOnCloudinary = (fileBuffer, folderName, resourceType = "image") => {
+  return new Promise((resolve, reject) => {
+    if (!fileBuffer) return resolve(null);
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: resourceType,
+        folder: `playtube/${folderName}`,
+      },
+      (error, response) => {
+        if (error) {
+          logger.error("Cloudinary stream upload error:", error);
+          return reject(new ApiError(500, "File upload to cloud storage failed"));
+        }
+        resolve({
+          url: response.secure_url,
+          publicId: response.public_id,
+        });
+      }
+    );
+
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+  });
+};
+
+const uploadOnCloudinary = async (localFilePath, folderName, resourceType = "auto") => {
+  if (!localFilePath) return null;
+
+  try {
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: resourceType,
+      folder: `playtube/${folderName}`,
+    });
+
+    return {
+      url: response.secure_url,
+      publicId: response.public_id,
+      ...(response.resource_type === "video" && { duration: response.duration }),
+    };
+  } catch (error) {
+    logger.error("Cloudinary upload error:", error?.message || error);
+    throw new ApiError(500, "File upload to cloud storage failed");
+  } finally {
+    cleanupLocalFile(localFilePath);
+  }
+};
+
 const destroyFromCloudinary = async (publicId, resourceType = "image") => {
-  if (!publicId) throw new ApiError(400, "Public ID is required");
+  if (!publicId) return null;
+
   try {
     const response = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
     });
-    if (response.result === "ok" || response.result === "not found")
-      return response;
-    throw new ApiError(500, `Cloudinary delete failed: ${response.result}`);
+
+    if (response.result !== "ok" && response.result !== "not found") {
+      logger.warn(`Cloudinary deletion issue (${publicId}): ${response.result}`);
+    }
+
+    logger.info(`File ${publicId} deleted from cloudinary successfully`);
+    return response;
   } catch (error) {
-    console.error("Error in destroying file from Cloudinary:", error);
-    throw error;
+    logger.error(`Cloudinary deletion error (${publicId}): ${error?.message || error}`, {
+      stack: error.stack,
+    });
+    return null;
   }
 };
-export { uploadOnCloudinary, destroyFromCloudinary };
+
+export {
+  uploadOnCloudinary,
+  uploadBufferOnCloudinary,
+  destroyFromCloudinary
+};

@@ -6,13 +6,16 @@ export const serverFile = {
   DB_CLOSE: "Database connection closed",
   DB_CLOSING_ERROR: "Database Closing Error",
   ERROR: "Error connecting to the database:",
+  FILE_UPLOAD_FAILED: "Failed to upload file, please try again",
 };
 
 export const authMessage = {
-  USER_NOT_FOUND: "this user not found",
-  INVALID: "token is not valid",
+  USER_NOT_FOUND: "User not found",
+  INVALID_TOKEN: "Token is not valid",
+  INVALID_REFRESH_TOKEN: "Refresh token is not valid",
   UN_AUTH: "Unauthorize user",
   TOKEN_REQUIRED: "Authorization token is required",
+  INVALID_CREDENTIALS: "Invalid email or password",
 };
 
 export const userMessage = {
@@ -32,15 +35,22 @@ export const userMessage = {
   PASSWORD_RESET_SUCCESS: "Password reset successfully",
   PASSWORD_RESET_FAILED: "Failed to reset password",
   USER_UPDATED: "User updated successfully",
+  AVATAR_UPDATED: "Avatar updated successfully",
+  COVER_IMG_UPDATED: "Cover image updated successfully",
+  AVATAR_UPDATE_FAILED: "Failed to update avatar, please try again",
   USER_DELETED: "User deleted successfully",
   USER_LIST: "User list retrieved successfully",
   REQUIRED_FIELDS: "Name, email, and password are required",
+  USERNAME_MISSING: "Username is missing",
   LOGIN_SUCCESS: "Login successful",
   LOGOUT_SUCCESS: "Logout successful",
   REQUIRED_TOKEN: "Refresh token required",
   INVALID_TOKEN: "token is not valid",
   NEW_TOKEN: "New access token generated",
   FETCH_PROFILE: "User profile fetched successfully",
+  FETCH_CHANNEL: "User channel fetched successfully",
+  CHANNEL_NOT_FOUND: "Channel does not exist",
+  FETCH_HISTORY: "Watch history fetched successfully",
   INCORRECT_PASSWORD: "Incorrect old password",
   CHANGE_PASSWORD: "Password changed successfully",
   REQUIRED: "idToken and provider are required.",
