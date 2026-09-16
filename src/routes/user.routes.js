@@ -1,99 +1,95 @@
 import express from "express";
+import { validateRequest } from "../middlewares/validateRequest.middleware.js"
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { uploadImage } from "../middlewares/imageUpload.middleware.js";
+import { validateFiles } from "../middlewares/validateFiles.middleware.js"
+import { UserRepository } from "../repository/user.repository.js";
+import { UserService } from "../services/user.service.js";
+import { UserController } from "../controllers/user.controller.js";
 import {
-  userRegister,
-  loginUser,
-  logoutUser,
-  getCurrentUser,
-  refreshAccessToken,
-  changeCurrentPassword,
-  updateAccountDetails,
-  updateUserAvatar,
-  updateUserCoverImage,
-  getUserChannelProfile,
-  getWatchHistory,
-} from "../controllers/user.controller.js";
-import {registerUserSchema,
+  registerUserSchema,
   loginUserSchema,
   changeCurrentPasswordSchema,
   updateAccountDetailsSchema
 } from "../schemaValidations/user.validation.js"
-import {validate} from "../middlewares/validate.middleware.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { uploadImage } from "../middlewares/imageUpload.middleware.js";
-const router = express.Router();
 
-router.route("/register").post(
+const router = express.Router();
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository);
+const userController = new UserController(userService);
+
+router.post("/register",
   uploadImage.fields([
-    {
-      name: "avatar",
-      maxCount: 1,
-    },
-    {
-      name: "coverImage",
-      maxCount: 1,
-    },
+    { name: "avatar", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
   ]),
-  userRegister
+  validateFiles("avatar"),
+  validateRequest(registerUserSchema),
+  userController.userRegister
 );
 
 router.post(
   "/login",
-  verifyJWT,
-  loginUser
+  validateRequest(loginUserSchema),
+  userController.loginUser
 );
 
 router.post(
   "/logout",
   verifyJWT,
-  logoutUser
+  userController.logoutUser
 );
 
 router.get(
   "/current-user",
   verifyJWT,
-  getCurrentUser
+  userController.getCurrentUser
 )
 
-router.get(
+router.post(
   "/refresh-token",
-  refreshAccessToken
+  userController.refreshAccessToken
 );
 
-router.get(
+router.post(
   "/change-password",
   verifyJWT,
-  changeCurrentPassword
+  validateRequest(changeCurrentPasswordSchema),
+  userController.changeCurrentPassword
 );
 
-router.post(
-    "/update-account",
-    verifyJWT,
-    updateAccountDetails
-  );
+router.patch(
+  "/update-account",
+  verifyJWT,
+  validateRequest(updateAccountDetailsSchema),
+  userController.updateAccountDetails
+);
 
-router.post(
-    "/update-avatar",
-    verifyJWT,
-    uploadImage.single("avatar"),
-    updateUserAvatar
-  );
+router.patch(
+  "/update-avatar",
+  verifyJWT,
+  uploadImage.single("avatar"),
+  validateFiles("avatar"),
+  userController.updateUserAvatar
+);
 
-router.post(
-    "/update-coverImage",
-    verifyJWT,
-    uploadImage.single("coverImage"),
-    updateUserCoverImage
-  );
+router.patch(
+  "/update-coverImage",
+  verifyJWT,
+  uploadImage.single("coverImage"),
+  validateFiles("coverImage"),
+  userController.updateUserCoverImage
+);
 
 router.get(
   "/c/:username",
   verifyJWT,
-  getUserChannelProfile
+  userController.getUserChannelProfile
 );
 
 router.get(
   "/history",
   verifyJWT,
-  getWatchHistory);
+  userController.getWatchHistory);
 
 export default router;

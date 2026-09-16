@@ -26,18 +26,26 @@ const userSchema = new Schema(
       index: true,
     },
     avatar: {
-      type: String,
-      required: true,
+      url: {
+        type: String,
+        required: true,
+        trim: true
     },
-    avatarPublicId: {
-      type: String,
-      required: true,
-    },
+      publicId: {
+        type: String,
+        required: true,
+        trim: true
+      }
+   },
     coverImage: {
-      type: String,
-    },
-    coverImagePublicId: {
-      type: String,
+      url: {
+        type: String,
+        trim: true
+      },
+      publicId: {
+        type: String,
+        trim: true
+      }
     },
     watchHistory: {
       type: [Schema.Types.ObjectId],
